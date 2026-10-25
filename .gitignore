@@ -1,0 +1,30 @@
+# Dependências e builds
+node_modules/
+dist/
+.output/
+.vercel/
+.tanstack/
+.vite/
+
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+.grok/
+*.pem
+*.key
+
+# Bancos e arquivos locais
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Cache e arquivos temporários
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# Arquivos auxiliares locais
+.node_modules.lock
