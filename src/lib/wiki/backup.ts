@@ -16,6 +16,32 @@ function asSkin(value: unknown, fallbackName: string): Skin {
     splash: typeof skin.splash === "string" ? skin.splash : "",
     posX: typeof skin.posX === "number" && Number.isFinite(skin.posX) ? skin.posX : 50,
     posY: typeof skin.posY === "number" && Number.isFinite(skin.posY) ? skin.posY : 50,
+    loadingImage: typeof skin.loadingImage === "string" ? skin.loadingImage : "",
+    circleImage: typeof skin.circleImage === "string" ? skin.circleImage : "",
+    playerIcon: typeof skin.playerIcon === "string" ? skin.playerIcon : "",
+    splashBgImage: typeof skin.splashBgImage === "string" ? skin.splashBgImage : "",
+    splashFrame: skin.splashFrame && typeof skin.splashFrame === "object"
+      ? normalizeSplashFrame(skin.splashFrame)
+      : undefined,
+  };
+}
+
+function normalizeSplashFrame(value: unknown): import("@/lib/wiki/types").ChampionSplashFrame {
+  const frame = value && typeof value === "object"
+    ? value as Record<string, unknown>
+    : {};
+  const numberOr = (raw: unknown, fallback: number) =>
+    typeof raw === "number" && Number.isFinite(raw) ? raw : fallback;
+
+  return {
+    x: Math.max(0, Math.min(100, numberOr(frame.x, 50))),
+    y: Math.max(0, Math.min(100, numberOr(frame.y, 50))),
+    zoom: Math.max(100, Math.min(500, numberOr(frame.zoom, 100))),
+    opacity: Math.max(0, Math.min(100, numberOr(frame.opacity, 50))),
+    radialX: Math.max(0, Math.min(100, numberOr(frame.radialX, 50))),
+    radialY: Math.max(0, Math.min(100, numberOr(frame.radialY, 50))),
+    radialSize: Math.max(10, Math.min(100, numberOr(frame.radialSize, 65))),
+    radialIntensity: Math.max(0, Math.min(100, numberOr(frame.radialIntensity, 60))),
   };
 }
 
@@ -45,6 +71,10 @@ export function normalizeChampion(input: Record<string, unknown>): ChampionInput
     bio: typeof input.bio === "string" ? input.bio : "",
     imgUrl: skins[0]?.frameImg || skins[0]?.thumb || "",
     splashUrl: skins[0]?.splash || "",
+    loadingImage: typeof input.loadingImage === "string" ? input.loadingImage : "",
+    circleImage: typeof input.circleImage === "string" ? input.circleImage : "",
+    splashBgImage: typeof input.splashBgImage === "string" ? input.splashBgImage : "",
+    splashFrame: normalizeSplashFrame(input.splashFrame),
     skins,
   };
   const id = num(input.id);

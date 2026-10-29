@@ -32,7 +32,8 @@ export type ModalState =
   | { kind: "quote"; id: number | null; categoryId: number | null }
   | { kind: "text" }
   | { kind: "media" }
-  | { kind: "transfer" };
+  | { kind: "transfer" }
+  | { kind: "skin"; champId: number; skinIndex: number | null };
 
 type WikiState = {
   ready: boolean;
@@ -69,7 +70,7 @@ type WikiState = {
   removeTitle: (id: number) => void;
   saveQuote: (draft: QuoteDraft) => Promise<void>;
   removeQuote: (id: number) => void;
-  saveQuickMedia: (thumb: string, frameImg: string, splash: string) => Promise<void>;
+  saveQuickMedia: (loadingImage: string, circleImage: string, skinIndex: number, playerIcon: string, splashBgImage: string, frame: import("@/lib/wiki/types").ChampionSplashFrame) => Promise<void>;
   importText: (raw: string) => Promise<void>;
   transfer: (from: number, to: number, action: "copy" | "move") => Promise<void>;
   exportJson: () => void;
@@ -99,6 +100,7 @@ export type QuoteDraft = {
 
 let audio: HTMLAudioElement | null = null;
 let audioBound = false;
+let audioProgressFrame = 0;
 let initOnce: Promise<void> | null = null;
 let pendingConfirm: (() => Promise<void>) | null = null;
 let toastTimer = 0;
@@ -247,8 +249,35 @@ function bindAudio(
   const player = getAudio();
   if (!player || audioBound) return;
   audioBound = true;
-  player.addEventListener("play", () => set({ playing: true, playerError: null }));
-  player.addEventListener("pause", () => set({ playing: false }));
+  player.addEventListener("play", () => {
+    set({ playing: true, playerError: null });
+    if (audioProgressFrame) cancelAnimationFrame(audioProgressFrame);
+
+    const updateProgress = () => {
+      if (player.paused || player.ended) {
+        audioProgressFrame = 0;
+        return;
+      }
+
+      set({
+        current: player.currentTime,
+        duration: Number.isFinite(player.duration) ? player.duration : 0,
+      });
+
+      audioProgressFrame = requestAnimationFrame(updateProgress);
+    };
+
+    audioProgressFrame = requestAnimationFrame(updateProgress);
+  });
+  player.addEventListener("pause", () => {
+    if (audioProgressFrame) cancelAnimationFrame(audioProgressFrame);
+    audioProgressFrame = 0;
+    set({
+      playing: false,
+      current: player.currentTime,
+      duration: Number.isFinite(player.duration) ? player.duration : 0,
+    });
+  });
   player.addEventListener("ended", () => {
       const { trackIndex, playlist } = get();
       if (trackIndex + 1 < playlist.length) get().next();
@@ -362,7 +391,8 @@ export const useWiki = create<WikiState>((set, get) => {
           modal.kind === "media" ||
           modal.kind === "title" ||
           modal.kind === "quote" ||
-          modal.kind === "transfer") &&
+          modal.kind === "transfer" ||
+          modal.kind === "skin") &&
         !requireChampion()
       ) {
         return;
@@ -497,23 +527,38 @@ export const useWiki = create<WikiState>((set, get) => {
         },
       );
     },
-    saveQuickMedia: async (thumb, frameImg, splash) => {
-      const { champions, champId, skinIndex } = get();
+    saveQuickMedia: async (loadingImage, circleImage, skinIndex, playerIcon, splashBgImage, frame) => {
+      const { champions, champId } = get();
       const champ = champions.find((item) => item.id === champId);
-      if (!champ) return;
-      const skins = champ.skins.map((skin, index) =>
-        index === skinIndex ? { ...skin, thumb: thumb.trim(), frameImg: frameImg.trim(), splash: splash.trim() } : skin,
-      );
-      if (skins.length === 0) return;
+      if (!champ) {
+        flash("Selecione um campeão antes de salvar as imagens.");
+        return;
+      }
+      const index = Math.max(0, Math.min(champ.skins.length - 1, Math.trunc(skinIndex)));
+      const skins = champ.skins.map((skin, i) => i === index ? {
+        ...skin,
+        loadingImage,
+        circleImage,
+        playerIcon,
+        splashBgImage,
+        splashFrame: {
+          x: Math.max(0, Math.min(100, Number(frame.x) || 0)),
+          y: Math.max(0, Math.min(100, Number(frame.y) || 0)),
+          zoom: Math.max(100, Math.min(500, Number(frame.zoom) || 100)),
+          opacity: Math.max(0, Math.min(100, Number(frame.opacity ?? 50))),
+          radialX: Math.max(0, Math.min(100, Number(frame.radialX ?? 50))),
+          radialY: Math.max(0, Math.min(100, Number(frame.radialY ?? 50))),
+          radialSize: Math.max(10, Math.min(100, Number(frame.radialSize ?? 65))),
+          radialIntensity: Math.max(0, Math.min(100, Number(frame.radialIntensity ?? 60))),
+        },
+      } : skin);
       const record: ChampionInput = {
         ...champ,
         skins,
-        imgUrl: skins[0]?.frameImg || skins[0]?.thumb || "",
-        splashUrl: skins[0]?.splash || "",
       };
       await putChampion(record);
-      await publish({ modal: { kind: "closed" } });
-      flash("Imagens atualizadas.");
+      await publish();
+      flash("Imagens do campeão e da skin atualizadas.");
     },
     importText: async (raw) => {
       const { champId, skinIndex } = get();

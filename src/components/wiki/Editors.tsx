@@ -1,9 +1,10 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Bold, Italic, X } from "lucide-react";
 import { readAsDataUrl } from "@/lib/wiki/files";
 import { useWiki, type QuoteDraft, type TitleDraft } from "@/lib/wiki/store";
 import { isMediaVideo, plainText } from "@/lib/wiki/text";
 import type { ElementLevel, Skin } from "@/lib/wiki/types";
+import type React from "react";
 
 const emptySkin = (): Skin => ({ name: "", thumb: "", frameImg: "", splash: "", posX: 50, posY: 50 });
 
@@ -25,6 +26,7 @@ export function Editors() {
   return (
     <>
       {modal.kind === "champ" ? <ChampionEditor id={modal.id} /> : null}
+      {modal.kind === "skin" ? <SkinEditor champId={modal.champId} skinIndex={modal.skinIndex} /> : null}
       {modal.kind === "title" ? <TitleEditor id={modal.id} parentId={modal.parentId} /> : null}
       {modal.kind === "quote" ? <QuoteEditor id={modal.id} categoryId={modal.categoryId} /> : null}
       {modal.kind === "text" ? <TextImporter /> : null}
@@ -79,109 +81,35 @@ function ChampionEditor({ id }: { id: number | null }) {
   const existing = id != null ? champions.find((champion) => champion.id === id) : undefined;
   const [name, setName] = useState(existing?.name ?? "");
   const [title, setTitle] = useState(existing?.title ?? "");
-  const [tags, setTags] = useState(existing?.tags ?? (id == null ? "MEIO, MAGO" : ""));
+  const [tags, setTags] = useState(existing?.tags ?? "MEIO, MAGO");
   const [bio, setBio] = useState(existing?.bio ?? "");
-  const [skins, setSkins] = useState<Skin[]>(
-    existing?.skins?.length ? existing.skins.map((skin) => ({ ...skin })) : [emptySkin()],
-  );
-
-  const patchSkin = (index: number, partial: Partial<Skin>) => {
-    setSkins((current) => current.map((skin, skinIndex) => (skinIndex === index ? { ...skin, ...partial } : skin)));
-  };
 
   return (
-    <Shell title={id == null ? "Novo campeão" : "Editar campeão e skins"}>
+    <Shell title={id == null ? "Novo campeão" : "Editar campeão"}>
       <Field label="Nome do campeão">
         <input value={name} onChange={(event) => setName(event.target.value)} />
       </Field>
-      <Field label="Título / epíteto">
+      <Field label="Epíteto">
         <input value={title} placeholder="a Guardiã do Eco" onChange={(event) => setTitle(event.target.value)} />
       </Field>
-      <Field label="Tags / posições">
+      <Field label="Posição">
         <input value={tags} placeholder="MEIO, MAGO" onChange={(event) => setTags(event.target.value)} />
       </Field>
       <Field label="Sinopse">
         <textarea rows={4} value={bio} onChange={(event) => setBio(event.target.value)} />
       </Field>
-      <p className="field-label">Skins</p>
-      {skins.map((skin, index) => (
-        <div className="skin-editor-card" key={index}>
-          <Field label="Nome da skin">
-            <input
-              value={skin.name}
-              placeholder="Clássica"
-              onChange={(event) => patchSkin(index, { name: event.target.value })}
-            />
-          </Field>
-          <Field label="Miniatura do carrossel">
-            <input
-              value={skin.thumb}
-              placeholder="URL da imagem"
-              onChange={(event) => patchSkin(index, { thumb: event.target.value })}
-            />
-            <FilePick accept="image/*" onUrl={(url) => patchSkin(index, { thumb: url })} />
-            <div className="pos-controls-row">
-              <label>
-                Posição X %
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={skin.posX}
-                  onChange={(event) => patchSkin(index, { posX: Number(event.target.value) })}
-                />
-              </label>
-              <label>
-                Posição Y %
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={skin.posY}
-                  onChange={(event) => patchSkin(index, { posY: Number(event.target.value) })}
-                />
-              </label>
-            </div>
-          </Field>
-          <Field label="Moldura (imagem ou vídeo)">
-            <input
-              value={skin.frameImg}
-              placeholder="URL de imagem ou .mp4"
-              onChange={(event) => patchSkin(index, { frameImg: event.target.value })}
-            />
-            <FilePick accept="image/*,video/*" maxBytes={12_000_000} onUrl={(url) => patchSkin(index, { frameImg: url })} />
-          </Field>
-          <Field label="Splash de fundo">
-            <input
-              value={skin.splash}
-              placeholder="URL da arte"
-              onChange={(event) => patchSkin(index, { splash: event.target.value })}
-            />
-            <FilePick accept="image/*" onUrl={(url) => patchSkin(index, { splash: url })} />
-          </Field>
-          <button
-            type="button"
-            className="btn delete-btn"
-            onClick={() => setSkins((current) => current.filter((_, skinIndex) => skinIndex !== index))}
-          >
-            Remover skin
-          </button>
-        </div>
-      ))}
-      <button type="button" className="btn" onClick={() => setSkins((current) => [...current, emptySkin()])}>
-        + Adicionar skin
-      </button>
       <button
         type="button"
         className="modal-btn"
         onClick={() =>
           void useWiki.getState().saveChampion({
+            ...(existing ?? {}),
             id: id ?? undefined,
             name,
             title,
             tags,
             bio,
-            skins: skins.length ? skins : [emptySkin()],
+            skins: existing?.skins?.length ? existing.skins : [emptySkin()],
           })
         }
       >
@@ -190,6 +118,86 @@ function ChampionEditor({ id }: { id: number | null }) {
       {id != null ? (
         <button type="button" className="modal-btn delete-btn" onClick={() => useWiki.getState().removeChampion(id)}>
           Excluir campeão
+        </button>
+      ) : null}
+    </Shell>
+  );
+}
+
+function SkinEditor({ champId, skinIndex }: { champId: number; skinIndex: number | null }) {
+  const champions = useWiki((state) => state.champions);
+  const champion = champions.find((item) => item.id === champId);
+  const existingSkin = skinIndex == null ? undefined : champion?.skins[skinIndex];
+  const [name, setName] = useState(existingSkin?.name ?? "");
+
+  if (!champion) {
+    return (
+      <Shell title="Skin indisponível">
+        <p className="hint">Este campeão não foi encontrado.</p>
+      </Shell>
+    );
+  }
+
+  const save = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      useWiki.getState().flash("Digite o nome da skin.");
+      return;
+    }
+
+    const skins = champion.skins.length ? [...champion.skins] : [emptySkin()];
+    if (skinIndex == null) {
+      skins.push({ ...emptySkin(), name: trimmedName });
+    } else if (skinIndex >= 0 && skinIndex < skins.length) {
+      skins[skinIndex] = { ...skins[skinIndex], name: trimmedName };
+    } else {
+      useWiki.getState().flash("Esta skin não existe mais.");
+      return;
+    }
+
+    void useWiki.getState().saveChampion({ ...champion, skins });
+  };
+
+  const remove = () => {
+    if (skinIndex == null || !existingSkin) return;
+    if (champion.skins.length <= 1) {
+      useWiki.getState().flash("O campeão precisa ter pelo menos uma skin.");
+      return;
+    }
+
+    useWiki.getState().askConfirm(
+      {
+        title: "Remover skin",
+        body: `Remover "${existingSkin.name || "Skin sem nome"}" deste campeão?`,
+        confirmLabel: "Remover",
+      },
+      async () => {
+        const skins = champion.skins.filter((_, index) => index !== skinIndex);
+        await useWiki.getState().saveChampion({ ...champion, skins });
+        const current = useWiki.getState();
+        if (current.champId === champId) {
+          current.setSkin(Math.min(current.skinIndex, skins.length - 1));
+        }
+      },
+    );
+  };
+
+  return (
+    <Shell title={skinIndex == null ? "Adicionar skin" : "Editar skin"}>
+      <Field label="Nome da skin">
+        <input
+          autoFocus
+          value={name}
+          placeholder="Clássica"
+          onChange={(event) => setName(event.target.value)}
+        />
+      </Field>
+      <button type="button" className="modal-btn" onClick={save}>
+        {skinIndex == null ? "Adicionar skin" : "Salvar skin"}
+      </button>
+      {skinIndex != null ? (
+        <button type="button" className="modal-btn delete-btn" onClick={remove}>
+          Remover skin
         </button>
       ) : null}
     </Shell>
@@ -385,45 +393,473 @@ function MediaEditor() {
   const skinIndex = useWiki((state) => state.skinIndex);
   const champion = champions.find((item) => item.id === champId);
   const skin = champion?.skins[skinIndex] ?? champion?.skins[0];
-  const [thumb, setThumb] = useState(skin?.thumb ?? "");
-  const [frame, setFrame] = useState(skin?.frameImg ?? "");
-  const [splash, setSplash] = useState(skin?.splash ?? "");
+
+  const [loadingImage, setLoadingImage] = useState(skin?.loadingImage || champion?.loadingImage || "");
+  const [circleImage, setCircleImage] = useState(skin?.circleImage || champion?.circleImage || "");
+  const [playerIcon, setPlayerIcon] = useState(skin?.playerIcon || "");
+  const [splashBgImage, setSplashBgImage] = useState(
+    skin?.splashBgImage || skin?.splash || champion?.splashBgImage || "",
+  );
+  const initialFrame = { ...defaultSplashFrame(), ...(skin?.splashFrame ?? champion?.splashFrame ?? {}) };
+  const [frame, setFrame] = useState<SplashFrame>(initialFrame);
+  const [draft, setDraft] = useState<SplashFrame>(initialFrame);
+
+  useEffect(() => {
+    setLoadingImage(skin?.loadingImage || champion?.loadingImage || "");
+    setCircleImage(skin?.circleImage || champion?.circleImage || "");
+    setPlayerIcon(skin?.playerIcon || "");
+    setSplashBgImage(skin?.splashBgImage || skin?.splash || champion?.splashBgImage || "");
+    const saved = { ...defaultSplashFrame(), ...(skin?.splashFrame ?? champion?.splashFrame ?? {}) };
+    setFrame(saved);
+    setDraft(saved);
+  }, [
+    champId, skinIndex, champion?.loadingImage, champion?.circleImage,
+    skin?.loadingImage, skin?.circleImage, champion?.splashBgImage,
+    champion?.splashFrame, skin?.playerIcon,
+    skin?.splashBgImage, skin?.splash, skin?.splashFrame,
+  ]);
+
+  const updateFrame = (patch: Partial<SplashFrame>) => {
+    setDraft((current) => ({ ...current, ...patch }));
+  };
 
   return (
     <Shell title="Imagens e vídeo">
-      <p className="hint">Arquivos ficam só neste aparelho. URLs continuam apontando para a internet.</p>
-      <Field label="1. Miniatura da skin">
-        <input value={thumb} placeholder="URL da imagem" onChange={(event) => setThumb(event.target.value)} />
-        <FilePick accept="image/*" onUrl={setThumb} />
-        {thumb && !isMediaVideo(thumb) ? <Preview src={thumb} /> : null}
-      </Field>
-      <Field label="2. Moldura retangular">
-        <input value={frame} placeholder="URL de imagem ou vídeo" onChange={(event) => setFrame(event.target.value)} />
-        <FilePick accept="image/*,video/*" maxBytes={12_000_000} onUrl={setFrame} />
-      </Field>
-      <Field label="3. Splash de fundo">
-        <input value={splash} placeholder="URL da arte" onChange={(event) => setSplash(event.target.value)} />
-        <FilePick accept="image/*" onUrl={setSplash} />
-        {splash && !isMediaVideo(splash) ? <Preview src={splash} wide /> : null}
-      </Field>
-      <button type="button" className="modal-btn" onClick={() => void useWiki.getState().saveQuickMedia(thumb, frame, splash)}>
-        Salvar alterações
-      </button>
+      {!champion || !skin ? (
+        <p className="hint">Selecione um campeão e uma skin antes de editar as imagens.</p>
+      ) : (
+        <>
+          <p className="hint">
+            Loading, círculo, splash, enquadramento e ícone do player pertencem à skin selecionada: {skin.name || `Skin ${skinIndex + 1}`}.
+          </p>
+
+          <Field label="1. Tela de loading (308 × 560)">
+            <FilePick accept="image/*" onUrl={setLoadingImage} />
+            {loadingImage ? <Preview src={loadingImage} variant="loading" /> : null}
+          </Field>
+
+          <Field label="2. Círculo (120 × 120)">
+            <FilePick accept="image/*" onUrl={setCircleImage} />
+            {circleImage ? <Preview src={circleImage} variant="circle" /> : null}
+            <p className="hint">O círculo pertence à skin selecionada e aparece no carrossel, não no card inicial.</p>
+          </Field>
+
+          <Field label="3. Ícone do player desta skin (120 × 120)">
+            <FilePick accept="image/*" onUrl={setPlayerIcon} />
+            {playerIcon ? <Preview src={playerIcon} variant="player" /> : null}
+          </Field>
+
+          <Field label="4. Splash art de fundo desta skin">
+            <FilePick
+              accept="image/*"
+              onUrl={(url) => {
+                setSplashBgImage(url);
+                const centeredFrame = defaultSplashFrame();
+                setFrame(centeredFrame);
+                setDraft(centeredFrame);
+              }}
+            />
+            {splashBgImage ? (
+              <div className="splash-background-live-preview">
+                <p className="hint">
+                  Prévia do recorte aplicado ao fundo da tela.
+                </p>
+                <SplashStaticPreview src={splashBgImage} frame={draft} />
+              </div>
+            ) : null}
+          </Field>
+
+          <section className="splash-framing-editor">
+            <h4>5. Enquadramento da splash</h4>
+            <p className="hint">
+              Esta prévia mostra o recorte aplicado ao fundo da tela.
+              Arraste para reposicionar ou use dois dedos para ajustar o zoom.
+            </p>
+            <div
+              className="splash-radial-workspace"
+              style={{ position: "relative", width: "100%" }}
+            >
+              <SplashGesturePreview
+                src={splashBgImage}
+                frame={draft}
+                onChange={updateFrame}
+              />
+              <div
+                className="splash-radial-overlay"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  overflow: "hidden",
+                  pointerEvents: "none",
+                  touchAction: "pan-y",
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: `${draft.radialX}%`,
+                    top: `${draft.radialY}%`,
+                    width: `${(draft.radialSize ?? 65) * 2}%`,
+                    height: `${(draft.radialSize ?? 65) * 2}%`,
+                    border: "1.5px dashed rgba(255,255,255,.9)",
+                    borderRadius: "50%",
+                    boxSizing: "border-box",
+                    transform: "translate(-50%, -50%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label="Arrastar centro do radial"
+                  title="Arraste para mover o centro do radial"
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  }}
+                  onPointerMove={(event) => {
+                    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+                    const workspace = event.currentTarget.parentElement?.parentElement;
+                    if (!workspace) return;
+                    const rect = workspace.getBoundingClientRect();
+                    if (!rect.width || !rect.height) return;
+                    const radialX = Math.max(0, Math.min(
+                      100, ((event.clientX - rect.left) / rect.width) * 100
+                    ));
+                    const radialY = Math.max(0, Math.min(
+                      100, ((event.clientY - rect.top) / rect.height) * 100
+                    ));
+                    updateFrame({ radialX, radialY });
+                  }}
+                  onPointerUp={(event) => {
+                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                      event.currentTarget.releasePointerCapture(event.pointerId);
+                    }
+                  }}
+                  onPointerCancel={(event) => {
+                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                      event.currentTarget.releasePointerCapture(event.pointerId);
+                    }
+                  }}
+                  style={{
+                    position: "absolute",
+                    left: `${draft.radialX}%`,
+                    top: `${draft.radialY}%`,
+                    width: 30,
+                    height: 30,
+                    padding: 0,
+                    border: "3px solid white",
+                    borderRadius: "50%",
+                    background: "rgba(80,160,255,.8)",
+                    boxShadow: "0 0 0 3px rgba(0,0,0,.45)",
+                    transform: "translate(-50%, -50%)",
+                    cursor: "grab",
+                    touchAction: "none",
+                    pointerEvents: "auto",
+                    zIndex: 5,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: 10,
+                      height: 2,
+                      background: "white",
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: 2,
+                      height: 10,
+                      background: "white",
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                </button>
+              </div>
+            </div>
+            <div className="splash-radial-controls">
+              <label>
+                Opacidade da splash: {Math.round(draft.opacity)}%
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={draft.opacity}
+                  onChange={(event) => updateFrame({ opacity: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Centro radial horizontal: {Math.round(draft.radialX)}%
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={draft.radialX}
+                  onChange={(event) => updateFrame({ radialX: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Centro radial vertical: {Math.round(draft.radialY)}%
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={draft.radialY}
+                  onChange={(event) => updateFrame({ radialY: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Tamanho do raio: {Math.round(draft.radialSize)}%
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={draft.radialSize}
+                  onChange={(event) => updateFrame({ radialSize: Number(event.target.value) })}
+                />
+              </label>
+              <label>
+                Intensidade do degradê: {Math.round(draft.radialIntensity)}%
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={draft.radialIntensity}
+                  onChange={(event) => updateFrame({ radialIntensity: Number(event.target.value) })}
+                />
+              </label>
+            </div>
+
+            <div className="row-actions">
+              <button type="button" className="modal-btn" onClick={() => setDraft({ ...frame })}>
+                Descartar alterações
+              </button>
+              <button
+                type="button"
+                className="modal-btn"
+                onClick={() => void useWiki.getState().saveQuickMedia(
+                  loadingImage, circleImage, skinIndex, playerIcon, splashBgImage, draft,
+                ).then(() => {
+                  setFrame({ ...draft });
+                })}
+              >
+                Salvar alterações
+              </button>
+              <button
+                type="button"
+                className="modal-btn"
+                onClick={() => setDraft(defaultSplashFrame())}
+              >
+                Restaurar enquadramento
+              </button>
+            </div>
+            <p className="hint">
+              {JSON.stringify(frame) === JSON.stringify(draft)
+                ? "Enquadramento sem alterações pendentes."
+                : "Enquadramento alterado. Salve para aplicar."}
+            </p>
+          </section>
+        </>
+      )}
     </Shell>
   );
 }
 
-function Preview({ src, wide }: { src: string; wide?: boolean }) {
+type SplashFrame = import("@/lib/wiki/types").ChampionSplashFrame;
+
+function defaultSplashFrame(): SplashFrame {
+  return {
+    x: 50, y: 50, zoom: 100,
+    opacity: 50, radialX: 50, radialY: 50,
+    radialSize: 65, radialIntensity: 60,
+  };
+}
+
+function SplashStaticPreview({
+  src,
+  frame,
+}: {
+  src: string;
+  frame: SplashFrame;
+}) {
+  const image = src && !isMediaVideo(src);
+
+  return (
+    <div
+      className="splash-framing-preview splash-framing-preview-static"
+      role="img"
+      aria-label="Prévia do fundo com o mesmo enquadramento da tela"
+    >
+      {image ? (
+        <img
+          className="splash-framing-art"
+          src={src}
+          alt=""
+          draggable={false}
+          style={{
+            objectFit: "cover",
+            objectPosition: `${frame.x}% ${frame.y}%`,
+            opacity: (frame.opacity ?? 50) / 100,
+            WebkitMaskImage: `radial-gradient(ellipse ${frame.radialSize ?? 65}% ${frame.radialSize ?? 65}% at ${frame.radialX ?? 50}% ${frame.radialY ?? 50}%, #000 0%, rgb(0 0 0 / ${1 - (frame.radialIntensity ?? 60) / 100}) 100%)`,
+            maskImage: `radial-gradient(ellipse ${frame.radialSize ?? 65}% ${frame.radialSize ?? 65}% at ${frame.radialX ?? 50}% ${frame.radialY ?? 50}%, #000 0%, rgb(0 0 0 / ${1 - (frame.radialIntensity ?? 60) / 100}) 100%)`,
+            transform: `scale(${Math.max(100, frame.zoom) / 100})`,
+            transformOrigin: `${frame.x}% ${frame.y}%`,
+          }}
+        />
+      ) : (
+        <span>Selecione uma imagem de splash para visualizar o fundo.</span>
+      )}
+    </div>
+  );
+}
+
+function SplashGesturePreview({
+  src,
+  frame,
+  onChange,
+}: {
+  src: string;
+  frame: SplashFrame;
+  onChange: (patch: Partial<SplashFrame>) => void;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef<{
+    x: number; y: number; frameX: number; frameY: number;
+    zoom: number; distance: number;
+  } | null>(null);
+
+  const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.hypot(a.x - b.x, a.y - b.y);
+
+  const begin = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!src || isMediaVideo(src)) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const points = [...pointers.current.values()];
+    gesture.current = {
+      x: event.clientX,
+      y: event.clientY,
+      frameX: frame.x,
+      frameY: frame.y,
+      zoom: frame.zoom,
+      distance: points.length >= 2 ? distance(points[0], points[1]) : 0,
+    };
+  };
+
+  const move = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointers.current.has(event.pointerId)) return;
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const start = gesture.current;
+    const bounds = boxRef.current?.getBoundingClientRect();
+    if (!start || !bounds) return;
+
+    const points = [...pointers.current.values()];
+    if (points.length >= 2 && start.distance > 0) {
+      onChange({ zoom: Math.max(100, Math.min(500, start.zoom * distance(points[0], points[1]) / start.distance)) });
+      return;
+    }
+
+    const scale = Math.max(0.01, start.zoom / 100);
+    onChange({
+      x: Math.max(0, Math.min(100, start.frameX - (event.clientX - start.x) / bounds.width * 100 / scale)),
+      y: Math.max(0, Math.min(100, start.frameY - (event.clientY - start.y) / bounds.height * 100 / scale)),
+    });
+  };
+
+  const end = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointers.current.delete(event.pointerId);
+    gesture.current = null;
+    const points = [...pointers.current.values()];
+    if (points.length) {
+      const first = points[0];
+      gesture.current = {
+        x: first.x, y: first.y, frameX: frame.x, frameY: frame.y,
+        zoom: frame.zoom,
+        distance: points.length >= 2 ? distance(points[0], points[1]) : 0,
+      };
+    }
+  };
+
+  const image = src && !isMediaVideo(src)
+    ? `url("${src.replace(/["\\\\\n\r]/g, "")}")`
+    : "none";
+
+  return (
+    <div
+      ref={boxRef}
+      className="splash-framing-preview"
+      onPointerDown={begin}
+      onPointerMove={move}
+      onPointerUp={end}
+      onPointerCancel={end}
+      role="img"
+      aria-label="Imagem completa com recorte central interativo da splash"
+    >
+      {image !== "none" ? (
+        <img
+          className="splash-framing-art"
+          src={src}
+          alt=""
+          draggable={false}
+          style={{
+            objectPosition: `${frame.x}% ${frame.y}%`,
+            opacity: (frame.opacity ?? 50) / 100,
+            WebkitMaskImage: `radial-gradient(ellipse ${frame.radialSize ?? 65}% ${frame.radialSize ?? 65}% at ${frame.radialX ?? 50}% ${frame.radialY ?? 50}%, #000 0%, rgb(0 0 0 / ${1 - (frame.radialIntensity ?? 60) / 100}) 100%)`,
+            maskImage: `radial-gradient(ellipse ${frame.radialSize ?? 65}% ${frame.radialSize ?? 65}% at ${frame.radialX ?? 50}% ${frame.radialY ?? 50}%, #000 0%, rgb(0 0 0 / ${1 - (frame.radialIntensity ?? 60) / 100}) 100%)`,
+            transform: `scale(${Math.max(100, frame.zoom) / 100})`,
+            transformOrigin: `${frame.x}% ${frame.y}%`,
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function Preview({
+  src,
+  variant,
+}: {
+  src: string;
+  variant: "loading" | "circle" | "splash" | "player";
+}) {
+  const styles = {
+    loading: {
+      width: "min(100%, 180px)", aspectRatio: "308 / 560",
+      height: "auto", objectFit: "cover" as const, borderRadius: 0,
+    },
+    circle: {
+      width: 120, height: 120, aspectRatio: "1",
+      objectFit: "cover" as const, borderRadius: "50%",
+    },
+    splash: {
+      width: "min(100%, 240px)", aspectRatio: "9 / 16",
+      height: "auto", objectFit: "contain" as const, borderRadius: 0,
+    },
+    player: {
+      width: 120, height: 120, aspectRatio: "1",
+      objectFit: "cover" as const, borderRadius: 8,
+    },
+  }[variant];
+
   return (
     <img
       src={src}
       alt=""
       style={{
         display: "block",
-        marginTop: 8,
-        width: wide ? "100%" : 72,
-        height: wide ? 96 : 72,
-        objectFit: "cover",
+        margin: "8px auto",
+        ...styles,
         border: "1px solid var(--color-gold-line)",
       }}
     />

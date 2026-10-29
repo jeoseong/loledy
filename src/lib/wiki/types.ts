@@ -5,6 +5,22 @@ export type Skin = {
   splash: string;
   posX: number;
   posY: number;
+  loadingImage?: string;
+  circleImage?: string;
+  playerIcon?: string;
+  splashBgImage?: string;
+  splashFrame?: ChampionSplashFrame;
+};
+
+export type ChampionSplashFrame = {
+  x: number;
+  y: number;
+  zoom: number;
+  opacity: number;
+  radialX: number;
+  radialY: number;
+  radialSize: number;
+  radialIntensity: number;
 };
 
 export type Champion = {
@@ -15,6 +31,10 @@ export type Champion = {
   bio: string;
   imgUrl: string;
   splashUrl: string;
+  loadingImage?: string;
+  circleImage?: string;
+  splashBgImage?: string;
+  splashFrame?: ChampionSplashFrame;
   skins: Skin[];
 };
 

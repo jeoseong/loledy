@@ -135,22 +135,46 @@
   }
 }
 
-#fixedBgLayer,
-#fixedBgOverlay {
-  position: fixed;
+.fixed-bg-splash-image {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  height: 100dvh;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  /* Centro mais visível; bordas com 20% da opacidade final. */
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, rgb(0 0 0 / 0.4) 100%);
+  mask-image: radial-gradient(ellipse at center, #000 0%, rgb(0 0 0 / 0.4) 100%);
+}
+
+#fixedBgLayer,
+#fixedBgOverlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: var(--player-height, 110px);
+  left: 0;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
   pointer-events: none;
   transition: opacity 0.5s ease;
 }
 
 #fixedBgLayer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: var(--player-height, 110px);
+  left: 0;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  z-index: -2;
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  z-index: -2;
   opacity: 0;
 }
 
@@ -158,25 +182,193 @@
   z-index: -1;
   opacity: 0;
   background:
-    radial-gradient(circle at 50% 30%, rgba(6, 8, 12, 0.35) 0%, rgba(6, 8, 12, 0.75) 60%, #06080c 100%),
-    linear-gradient(to bottom, rgba(6, 8, 12, 0.4) 0%, rgba(6, 8, 12, 0.9) 80%, #06080c 100%);
+    radial-gradient(
+      ellipse at 50% 18%,
+      rgba(8, 20, 38, 0.04) 0%,
+      rgba(8, 20, 38, 0.06) 35%,
+      rgba(3, 7, 14, 0.16) 70%,
+      rgba(3, 7, 14, 0.30) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(5, 15, 30, 0.02) 0%,
+      rgba(5, 15, 30, 0.05) 40%,
+      rgba(3, 7, 14, 0.14) 72%,
+      rgba(3, 7, 14, 0.30) 100%
+    );
+}
+
+
+/* Fundo original do menu inicial, sem efeitos adicionais. */
+.wiki-root-home::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: calc(var(--home-bg-height, 360px) + 160px);
+  pointer-events: none;
+  opacity: 0.5;
+
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 5%,
+    rgba(0, 0, 0, 0.58) 11%,
+    #000 19%,
+    #000 62%,
+    rgba(0, 0, 0, 0.94) 72%,
+    rgba(0, 0, 0, 0.72) 82%,
+    rgba(0, 0, 0, 0.38) 91%,
+    rgba(0, 0, 0, 0.12) 97%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 5%,
+    rgba(0, 0, 0, 0.58) 11%,
+    #000 19%,
+    #000 62%,
+    rgba(0, 0, 0, 0.94) 72%,
+    rgba(0, 0, 0, 0.72) 82%,
+    rgba(0, 0, 0, 0.38) 91%,
+    rgba(0, 0, 0, 0.12) 97%,
+    transparent 100%
+  );
+
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(6, 8, 12, 0.88) 0%,
+      rgba(6, 8, 12, 0.70) 16%,
+      rgba(6, 8, 12, 0.38) 32%,
+      rgba(6, 8, 12, 0.10) 46%,
+      rgba(6, 8, 12, 0) 58%
+    ),
+    radial-gradient(
+      ellipse 58% 72% at 0% 100%,
+      #06080c 0%,
+      rgba(6, 8, 12, 0.94) 20%,
+      rgba(6, 8, 12, 0.72) 42%,
+      rgba(6, 8, 12, 0.34) 65%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 58% 72% at 100% 100%,
+      #06080c 0%,
+      rgba(6, 8, 12, 0.94) 20%,
+      rgba(6, 8, 12, 0.72) 42%,
+      rgba(6, 8, 12, 0.34) 65%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 78% 68% at 50% 112%,
+      #06080c 0%,
+      rgba(6, 8, 12, 0.96) 24%,
+      rgba(6, 8, 12, 0.78) 43%,
+      rgba(6, 8, 12, 0.48) 62%,
+      rgba(6, 8, 12, 0.22) 80%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 78% 62% at 50% 48%,
+      rgba(6, 8, 12, 0) 0%,
+      rgba(6, 8, 12, 0.04) 30%,
+      rgba(6, 8, 12, 0.14) 52%,
+      rgba(6, 8, 12, 0.36) 76%,
+      rgba(6, 8, 12, 0.58) 100%
+    ),
+    url("/championsBackground.jpeg");
+
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center 20px;
 }
 
 .wiki-root {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
 }
 
 .wiki-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
-  background: rgba(6, 8, 12, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--color-line);
+  background: transparent;
+  border: 0;
   padding: 8px 12px 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  box-shadow: none;
+}
+
+.wiki-header-floating {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wiki-header-floating .header-top {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 0;
+  min-height: 44px;
+}
+
+/* Sombra difusa apenas atrás do topo flutuante na tela inicial. */
+.wiki-header-floating .header-title h1 {
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.95);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
+}
+
+.settings-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 4px;
+  flex: 0 0 auto;
+  background: rgba(8, 10, 15, 0.48);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.75);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.85));
+}
+
+.settings-menu-btn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.settings-menu {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: max-content;
+  max-width: min(92vw, 360px);
+  padding: 12px;
+  background: rgba(8, 10, 15, 0.9);
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.settings-menu .toggle-mode-btn {
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+}
+
+.settings-menu .icon-toolbar {
+  justify-content: center;
+  margin-bottom: 0;
 }
 
 .header-top {
@@ -330,12 +522,19 @@
 
 .champ-crest {
   position: absolute;
-  top: 16%;
-  left: 50%;
-  width: 58%;
-  transform: translateX(-50%);
-  z-index: 0;
+  right: 8px;
+  bottom: 34%;
+  width: 30%;
+  max-width: 60px;
+  aspect-ratio: 1;
+  height: auto;
+  object-fit: cover;
+  border: 1px solid var(--color-gold-line);
+  border-radius: 50%;
+  transform: none;
+  z-index: 1;
   pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
 }
 
 .champ-card-overlay {
@@ -370,6 +569,22 @@
   line-height: 1.15;
 }
 
+/* Beaufort Bold: nomes das aparências na grade de skins. */
+.skin-name {
+  font-family: "Beaufort for LOL", "Palatino Linotype", serif;
+  font-size: 0.70rem;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.skin-item.active .skin-name {
+  color: var(--color-gold-bright);
+}
+
 .champ-edit-badge {
   position: absolute;
   top: 6px;
@@ -395,7 +610,7 @@
   position: relative;
   padding: 18px 16px 8px;
   text-align: center;
-  border-bottom: 1px solid rgba(120, 90, 40, 0.4);
+  border-bottom: 0;
 }
 
 .inline-back-btn {
@@ -403,17 +618,43 @@
   top: 12px;
   left: 12px;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-height: 36px;
-  background: rgba(6, 8, 12, 0.65);
-  border: 1px solid var(--color-gold-line);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
   color: var(--color-gold-bright);
-  padding: 6px 10px;
   font-family: var(--font-display);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
+  backdrop-filter: none;
+}
+
+.inline-back-btn img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+.inline-back-btn:hover,
+.inline-back-btn:focus,
+.inline-back-btn:focus-visible,
+.inline-back-btn:active {
+  background: transparent;
+  border: 0;
+  outline: none;
+  box-shadow: none;
 }
 
 .hero-content {
@@ -590,16 +831,66 @@
   object-fit: contain;
 }
 
+
+.champion-edit-image-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 4px;
+  border: 1px solid var(--color-gold);
+  border-radius: 4px;
+  background: rgba(8, 10, 16, 0.88);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.champion-edit-image-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.skin-item-wrap {
+  position: relative;
+  flex: 0 0 84px;
+  width: 84px;
+}
+
+.skin-item-wrap .skin-item {
+  width: 100%;
+}
+
+.skin-edit-icon-button {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  padding: 3px;
+  border: 1px solid var(--color-gold);
+  border-radius: 50%;
+  background: rgba(8, 10, 16, 0.94);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.7);
+}
+
+.skin-edit-icon-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .skin-item.active .skin-thumb {
   border: 2px solid var(--color-gold-bright);
   box-shadow: 0 0 10px rgba(240, 230, 210, 0.45);
-}
-
-.skin-name {
-  font-family: var(--font-display);
-  font-size: 0.66rem;
-  color: var(--color-ink);
-  line-height: 1.2;
 }
 
 .skin-item.active .skin-name {
@@ -719,15 +1010,21 @@
 .quote-content-text {
   flex: 1;
   min-width: 0;
-  color: var(--color-parchment);
-  font-size: 0.95rem;
-  font-style: italic;
-  line-height: 1.45;
+  color: #c4b998;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.5;
   user-select: text;
+  font-family: "Beaufort for LOL", "Palatino Linotype", serif;
+  font-weight: 700;
 }
 
 .quote-content-text b,
-.quote-content-text strong,
+.quote-content-text strong {
+  font-weight: 700;
+  color: #c4b998;
+}
+
 .dynamic-header-content b,
 .dynamic-header-content strong {
   font-weight: 800;
@@ -908,17 +1205,25 @@
   flex: 1;
   height: 22px;
   margin: 0;
+  padding: 0;
   appearance: none;
-  background: transparent;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: 0;
+  outline: none;
   cursor: pointer;
+  touch-action: pan-y;
 }
 
 .player-progress-bar::-webkit-slider-runnable-track {
   height: 2px;
-  background: var(--color-line);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .player-progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
   width: 12px;
   height: 12px;
@@ -926,11 +1231,21 @@
   border: 0;
   border-radius: 50%;
   background: var(--color-gold);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--color-gold) 35%, transparent);
 }
 
 .player-progress-bar::-moz-range-track {
   height: 2px;
-  background: var(--color-line);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.player-progress-bar::-moz-range-progress {
+  height: 2px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .player-progress-bar::-moz-range-thumb {
@@ -939,7 +1254,9 @@
   border: 0;
   border-radius: 50%;
   background: var(--color-gold);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--color-gold) 35%, transparent);
 }
+
 
 .modal-overlay {
   position: fixed;
@@ -1288,4 +1605,427 @@ textarea:focus-visible,
     font-size: clamp(2rem, 9vw, 2.5rem);
     letter-spacing: 0.06em;
   }
+}
+
+/* Loledy: tipografia do nome da skin */
+
+/* Espaçamento mais compacto somente no título principal quando exibe uma skin. */
+.hero-name.skin-title {
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+
+
+
+
+/* Capitular centralizada sobre a linha, isolada do fluxo do texto. */
+.hero-bio-initial {
+  float: left;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  width: 2.6em;
+  margin-right: 0.95em;
+  padding: 0 0 0.12em;
+  text-align: center;
+  vertical-align: top;
+}
+
+.hero-bio-initial-letter {
+  display: block;
+  width: 100%;
+  font-family: "Beaufort for LOL", serif;
+  font-size: 2.2em;
+  font-weight: 500;
+  line-height: 0.9;
+  text-align: center;
+}
+
+.hero-bio-initial-rule {
+  display: block;
+  align-self: center;
+  width: 95%;
+  height: 2.5px;
+  flex: 0 0 2.5px;
+  margin-top: 0.3em;
+  background-color: #937342;
+  text-decoration: none;
+}
+
+/* A linha decorativa pertence apenas ao elemento próprio da capitular. */
+.hero-bio-initial,
+.hero-bio-initial-letter,
+.hero-bio-initial-rule {
+  text-decoration: none;
+  border-bottom: 0;
+}
+
+
+
+
+/* AJUSTE-CARDS-308x560-ARO-CENTRAL-2026 */
+.champ-card {
+  aspect-ratio: 308 / 560;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+/* CARROSSEL: ARTE RECORTADA, ARO NA BORDA E MOLDURA POR CIMA */
+.skin-thumb {
+  position: relative;
+  isolation: isolate;
+  width: 80px;
+  height: 80px;
+  border: 0 !important;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.skin-thumb .skin-thumb-art {
+  position: absolute;
+  inset: 7px;
+  z-index: 1;
+  display: block;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.skin-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: linear-gradient(
+    to bottom,
+    #3F3412 0%,
+    #C5B88A 50%,
+    #3F3412 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.skin-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 50%;
+  background: url("/ChampionIconFrame.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.skin-item.active .skin-thumb {
+  border: 0 !important;
+  box-shadow: 0 0 10px rgba(197, 184, 138, 0.45);
+}
+
+/* DIVISOR DECORATIVO ABAIXO DO TÍTULO PRINCIPAL DA SKIN */
+.skin-title-divider {
+  display: block;
+  position: static;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 40px;
+  object-fit: fill;
+  margin: 4px 0 10px;
+  flex: 0 0 auto;
+}
+
+/* DIVISOR DECORATIVO AO LADO DA CONTAGEM DE SKINS */
+.skins-count-divider {
+  display: inline-block;
+  width: 160px;
+  max-width: 40vw;
+  height: 1px;
+  object-fit: fill;
+  object-position: left center;
+  margin: 0 auto 0 0;
+  flex: 0 1 auto;
+  vertical-align: middle;
+}
+
+
+/* Navegação flutuante exclusiva da página do campeão */
+.wiki-header-champion-hidden {
+  display: none !important;
+}
+
+.champion-top-nav {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2.2vw, 16px);
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.champion-top-nav::before {
+  content: none !important;
+  display: none !important;
+}
+
+.champion-region-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: none !important;
+}
+
+.champion-top-home {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #cbac62;
+  font-family: "Beaufort for LOL", "Palatino Linotype", serif;
+  font-size: clamp(0.72rem, 2.8vw, 0.92rem);
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  text-shadow: none !important;
+  cursor: pointer;
+}
+
+.champion-top-arrow {
+  display: block;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.champion-top-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #f0e6d2;
+  font-family: "Beaufort for LOL", "Palatino Linotype", serif;
+  font-size: clamp(0.76rem, 3.2vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.98);
+}
+
+.champion-top-home:focus-visible {
+  outline: 1px solid #cbac62;
+  outline-offset: 4px;
+}
+
+@media (max-width: 360px) {
+  .champion-top-nav {
+    gap: 7px;
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .champion-region-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .champion-top-arrow {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+
+/* HOME MENU CARD: UNSELECTED BORDER */
+.champ-card:not(.is-selected) {
+  border-color: #1C2532;
+  border-radius: 5px;
+}
+
+/* Transição suave do topo para o restante do fundo inicial. */
+/* Sombra superior suave até a altura do buscador na página inicial. */
+/* Sombra e blur graduais até a altura do buscador. */
+/* Sombra reforçada e blur graduais até a altura do buscador. */
+.wiki-root-home::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 190px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(6, 8, 12, 0.78) 0%,
+    rgba(6, 8, 12, 0.60) 24%,
+    rgba(6, 8, 12, 0.36) 52%,
+    rgba(6, 8, 12, 0.14) 78%,
+    rgba(6, 8, 12, 0) 100%
+  );
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    rgba(0, 0, 0, 0.85) 35%,
+    rgba(0, 0, 0, 0.45) 70%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    rgba(0, 0, 0, 0.85) 35%,
+    rgba(0, 0, 0, 0.45) 70%,
+    transparent 100%
+  );
+}
+
+
+/* Enquadramento global da splash, independente da posição das skins. */
+.splash-framing-editor {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-line);
+}
+.splash-framing-editor h4 {
+  margin: 0 0 8px;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+}
+.splash-framing-preview {
+  position: relative;
+  width: 100%;
+  max-width: 140px;
+  aspect-ratio: 1080 / 1775;
+  margin: 10px auto 14px;
+  border: 1px solid var(--color-gold-line);
+  background: #080b12;
+  touch-action: none;
+  cursor: grab;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.splash-framing-preview:active {
+  cursor: grabbing;
+}
+.splash-framing-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, object-position;
+}
+/* Prévia estática do fundo real, proporcional à tela e sem interação. */
+.splash-framing-preview-static {
+  width: min(100%, 140px);
+  max-width: 140px;
+  height: auto;
+  aspect-ratio: 1080 / 1775;
+  margin: 10px auto 14px;
+  cursor: default;
+  touch-action: auto;
+  pointer-events: none;
+}
+.splash-framing-preview-static:active {
+  cursor: default;
+}
+.splash-framing-preview-static .splash-framing-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.splash-framing-viewport {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  transform: translateX(-50%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  outline: 1px solid rgba(0, 0, 0, 0.8);
+  background: transparent;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+.splash-frame-control {
+  display: block;
+  margin: 12px 0;
+  color: var(--color-ink);
+  font-size: 0.78rem;
+}
+
+.splash-frame-control input[type="range"] {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  accent-color: var(--color-gold);
+}
+
+/* LOLEDY_INTERNAL_SCROLL_V1 */
+/* Transfere a rolagem para a área principal da wiki. */
+html:has(.wiki-root),
+body:has(.wiki-root) {
+  height: 100%;
+  overflow: hidden;
+}
+
+.wiki-root {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wiki-root > .wiki-header {
+  flex: 0 0 auto;
+}
+
+.wiki-root > .wiki-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
